@@ -7,9 +7,25 @@ use App\Models\JenisKendaraan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class JenisKendaraanController extends Controller
 {
+    private function generateUuid(){
+        $isDuplicate = true;
+        $duplicateArr = JenisKendaraan::pluck('uuid')->toArray();
+
+        while($isDuplicate){
+            $uuid = Str::orderedUuid()->toString();
+
+            if(!in_array($uuid, $duplicateArr)){
+                $isDuplicate = false;
+            }
+        }    
+        
+        return $uuid;
+    }
+
     public function create(Request $request){
         $storeData = $request->all();
 
@@ -26,7 +42,7 @@ class JenisKendaraanController extends Controller
 
         $jenisKendaraanData = collect($request)->only(JenisKendaraan::filters())->all();
         
-        $image_name = 'logo'.\Str::random(5).str_replace(' ', '', $jenisKendaraanData['nama']);
+        $image_name = 'logo'.\Str::random(5).str_replace(' ', '', $jenisKendaraanData['nama']).\Str::random(5);
         $file = $jenisKendaraanData['logo'];
         $extension = $file->getClientOriginalExtension();
 
@@ -37,6 +53,7 @@ class JenisKendaraanController extends Controller
         );
 
         $jenisKendaraanData['logo'] = $uploadDoc;
+        $jenisKendaraanData['uuid'] = $this->generateUuid();
 
         $jenisKendaraan = JenisKendaraan::create($jenisKendaraanData);
 
@@ -75,7 +92,7 @@ class JenisKendaraanController extends Controller
             if(isset($data->logo)){
                 Storage::delete("public/".$data->logo);
             }
-            $image_name = 'logo'.\Str::random(5).str_replace(' ', '', $jenisKendaraanData['nama']);
+            $image_name = 'logo'.\Str::random(5).str_replace(' ', '', $jenisKendaraanData['nama']).\Str::random(5);
             $file = $jenisKendaraanData['logo'];
             $extension = $file->getClientOriginalExtension();
 

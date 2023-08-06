@@ -7,9 +7,25 @@ use App\Models\Kendaraan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class KendaraanController extends Controller
 {
+    private function generateUuid(){
+        $isDuplicate = true;
+        $duplicateArr = Kendaraan::pluck('uuid')->toArray();
+
+        while($isDuplicate){
+            $uuid = Str::orderedUuid()->toString();
+
+            if(!in_array($uuid, $duplicateArr)){
+                $isDuplicate = false;
+            }
+        }    
+        
+        return $uuid;
+    }
+
     public function create(Request $request){
         $storeData = $request->all();
 
@@ -28,7 +44,7 @@ class KendaraanController extends Controller
 
         $kendaraanData = collect($request)->only(Kendaraan::filters())->all();
         
-        $image_name = 'gambar'.\Str::random(5).$request->jenis_kendaraan_id.str_replace(' ', '', $kendaraanData['nama']);
+        $image_name = 'gambar'.\Str::random(5).str_replace(' ', '', $kendaraanData['nama']).\Str::random(5);
         $file = $kendaraanData['foto'];
         $extension = $file->getClientOriginalExtension();
 
@@ -39,6 +55,7 @@ class KendaraanController extends Controller
         );
 
         $kendaraanData['foto'] = $uploadDoc;
+        $kendaraanData['uuid'] = $this->generateUuid();
 
         $kendaraan = Kendaraan::create($kendaraanData);
 
@@ -79,7 +96,7 @@ class KendaraanController extends Controller
             if(isset($data->foto)){
                 Storage::delete("public/".$data->foto);
             }
-            $image_name = 'gambar'.\Str::random(5).$request->jenis_kendaraan_id.str_replace(' ', '', $kendaraanData['nama']);
+            $image_name = 'gambar'.\Str::random(5).str_replace(' ', '', $kendaraanData['nama']).\Str::random(5);
             $file = $kendaraanData['foto'];
             $extension = $file->getClientOriginalExtension();
 

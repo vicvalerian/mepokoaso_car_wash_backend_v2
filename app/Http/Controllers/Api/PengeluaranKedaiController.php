@@ -7,9 +7,25 @@ use App\Models\MenuKedai;
 use App\Models\PengeluaranKedai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class PengeluaranKedaiController extends Controller
 {
+    private function generateUuid(){
+        $isDuplicate = true;
+        $duplicateArr = PengeluaranKedai::pluck('uuid')->toArray();
+
+        while($isDuplicate){
+            $uuid = Str::orderedUuid()->toString();
+
+            if(!in_array($uuid, $duplicateArr)){
+                $isDuplicate = false;
+            }
+        }    
+        
+        return $uuid;
+    }
+
     public function create(Request $request){
         $storeData = $request->all();
 
@@ -28,6 +44,7 @@ class PengeluaranKedaiController extends Controller
         }
 
         $pengeluaranKedaiData = collect($request)->only(PengeluaranKedai::filters())->all();
+        $pengeluaranKedaiData['uuid'] = $this->generateUuid();
 
         if(isset($request->menu_kedai_id)){
             $menuKedai = MenuKedai::find($request->menu_kedai_id);

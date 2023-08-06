@@ -6,9 +6,25 @@ use App\Http\Controllers\Controller;
 use App\Models\MenuKedai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class MenuKedaiController extends Controller
 {
+    private function generateUuid(){
+        $isDuplicate = true;
+        $duplicateArr = MenuKedai::pluck('uuid')->toArray();
+
+        while($isDuplicate){
+            $uuid = Str::orderedUuid()->toString();
+
+            if(!in_array($uuid, $duplicateArr)){
+                $isDuplicate = false;
+            }
+        }    
+        
+        return $uuid;
+    }
+
     public function create(Request $request){
         $storeData = $request->all();
 
@@ -26,6 +42,7 @@ class MenuKedaiController extends Controller
         }
 
         $menuKedaiData = collect($request)->only(MenuKedai::filters())->all();
+        $menuKedaiData['uuid'] = $this->generateUuid();
         $menuKedai = MenuKedai::create($menuKedaiData);
 
         return response([

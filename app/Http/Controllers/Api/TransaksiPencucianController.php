@@ -10,9 +10,55 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use PDF;
+use Illuminate\Support\Str;
 
 class TransaksiPencucianController extends Controller
 {
+    private function generateUuid(){
+        $isDuplicate = true;
+        $duplicateArr = TransaksiPencucian::pluck('uuid')->toArray();
+
+        while($isDuplicate){
+            $uuid = Str::orderedUuid()->toString();
+
+            if(!in_array($uuid, $duplicateArr)){
+                $isDuplicate = false;
+            }
+        }    
+        
+        return $uuid;
+    }
+
+    private function generateDetailUuid(){
+        $isDuplicate = true;
+        $duplicateArr = DetailTransaksiPencuci::pluck('uuid')->toArray();
+
+        while($isDuplicate){
+            $uuid = Str::orderedUuid()->toString();
+
+            if(!in_array($uuid, $duplicateArr)){
+                $isDuplicate = false;
+            }
+        }    
+        
+        return $uuid;
+    }
+
+    private function generateMobilPelangganUuid(){
+        $isDuplicate = true;
+        $duplicateArr = MobilPelanggan::pluck('uuid')->toArray();
+
+        while($isDuplicate){
+            $uuid = Str::orderedUuid()->toString();
+
+            if(!in_array($uuid, $duplicateArr)){
+                $isDuplicate = false;
+            }
+        }    
+        
+        return $uuid;
+    }
+
     private function generateNoPencucian(){
         $type = "CUCI";
         $currentTime = now()->format('dmy');
@@ -49,12 +95,14 @@ class TransaksiPencucianController extends Controller
 
         $pencucianData = collect($request)->only(TransaksiPencucian::filters())->all();
         $pencucianData['no_pencucian'] =  $this->generateNoPencucian();
+        $pencucianData['uuid'] = $this->generateUuid();
 
         $jmlPencuci = count($request->detail_transaksi_pencuci);
         $upahPencuci = ($pencucianData['tarif_kendaraan'] * 0.35) / $jmlPencuci;
 
         $pencucianPencucis = collect($request->detail_transaksi_pencuci)->map(function($pencuci) use($upahPencuci) {
             $pencuci['upah_pencuci'] = $upahPencuci;
+            $pencuci['uuid'] = $this->generateDetailUuid();
             return collect($pencuci)->only(DetailTransaksiPencuci::filters())->all();
         });
 
@@ -109,6 +157,7 @@ class TransaksiPencucianController extends Controller
 
         $pencucianPencucis = collect($request->detail_transaksi_pencuci)->map(function($pencuci) use($upahPencuci) {
             $pencuci['upah_pencuci'] = $upahPencuci;
+            $pencuci['uuid'] = $this->generateDetailUuid();
             return collect($pencuci)->only(DetailTransaksiPencuci::filters())->all();
         });
 
@@ -184,14 +233,23 @@ class TransaksiPencucianController extends Controller
         if($transaksi->jenis_kendaraan == 'Mobil'){
             $jml_transaksi = TransaksiPencucian::where('no_polisi', $transaksi->no_polisi)->count();
 
-            $mobilPelanggan = MobilPelanggan::updateOrCreate([
-                'no_polisi' => $transaksi->no_polisi,
-                'nama_kendaraan' => $transaksi->kendaraan->nama,
-            ], [
-                'jml_transaksi' => $jml_transaksi,
-            ]);
+            $mobilPelanggan = MobilPelanggan::where('no_polisi', $transaksi->no_polisi)->where('nama_kendaraan', $transaksi->kendaraan->nama)->first();
+            if($mobilPelanggan){
+                $mobilPelanggan->update([
+                    'jml_transaksi' => $jml_transaksi,    
+                ]);
 
-            $transaksi->update(['mobil_pelanggan_id' => $mobilPelanggan->id]);
+                $transaksi->update(['mobil_pelanggan_id' => $mobilPelanggan->id]);
+            } else{
+                $createMobilPelanggan = MobilPelanggan::create([
+                    'uuid' => $this->generateMobilPelangganUuid(),
+                    'no_polisi' => $transaksi->no_polisi,
+                    'nama_kendaraan' => $transaksi->kendaraan->nama,
+                    'jml_transaksi' => $jml_transaksi,
+                ]);
+
+                $transaksi->update(['mobil_pelanggan_id' => $createMobilPelanggan->id]);
+            }
         }
 
         $transaksi->update(['status' => 'Proses Cuci']);

@@ -6,9 +6,25 @@ use App\Http\Controllers\Controller;
 use App\Models\PeminjamanKaryawan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class PeminjamanKaryawanController extends Controller
 {
+    private function generateUuid(){
+        $isDuplicate = true;
+        $duplicateArr = PeminjamanKaryawan::pluck('uuid')->toArray();
+
+        while($isDuplicate){
+            $uuid = Str::orderedUuid()->toString();
+
+            if(!in_array($uuid, $duplicateArr)){
+                $isDuplicate = false;
+            }
+        }    
+        
+        return $uuid;
+    }
+
     public function create(Request $request){
         $storeData = $request->all();
 
@@ -26,6 +42,7 @@ class PeminjamanKaryawanController extends Controller
         }
 
         $peminjamanKaryawanData = collect($request)->only(PeminjamanKaryawan::filters())->all();
+        $peminjamanKaryawanData['uuid'] = $this->generateUuid();
         $peminjamanKaryawan = PeminjamanKaryawan::create($peminjamanKaryawanData);
 
         return response([

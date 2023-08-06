@@ -9,9 +9,40 @@ use App\Models\TransaksiKedai;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class TransaksiKedaiController extends Controller
 {
+    private function generateUuid(){
+        $isDuplicate = true;
+        $duplicateArr = TransaksiKedai::pluck('uuid')->toArray();
+
+        while($isDuplicate){
+            $uuid = Str::orderedUuid()->toString();
+
+            if(!in_array($uuid, $duplicateArr)){
+                $isDuplicate = false;
+            }
+        }    
+        
+        return $uuid;
+    }
+
+    private function generateDetailUuid(){
+        $isDuplicate = true;
+        $duplicateArr = DetailTransaksiKedai::pluck('uuid')->toArray();
+
+        while($isDuplicate){
+            $uuid = Str::orderedUuid()->toString();
+
+            if(!in_array($uuid, $duplicateArr)){
+                $isDuplicate = false;
+            }
+        }    
+        
+        return $uuid;
+    }
+
     private function generateNoPenjualan(){
         $type = "KEDAI";
         $currentTime = now()->format('dmy');
@@ -45,7 +76,10 @@ class TransaksiKedaiController extends Controller
 
         $kedaiData = collect($request)->only(TransaksiKedai::filters())->all();
         $kedaiData['no_penjualan'] = $this->generateNoPenjualan();
+        $kedaiData['uuid'] = $this->generateUuid();
+
         $kedaiMenus = collect($request->detail_transaksi_kedai)->map(function($menu) {
+            $menu['uuid'] = $this->generateDetailUuid();
             return collect($menu)->only(DetailTransaksiKedai::filters())->all();
         });
 
@@ -94,6 +128,7 @@ class TransaksiKedaiController extends Controller
 
         $kedaiData = collect($request)->only(TransaksiKedai::filters())->all();
         $kedaiMenus = collect($request->detail_transaksi_kedai)->map(function($menu) {
+            $menu['uuid'] = $this->generateDetailUuid();
             return collect($menu)->only(DetailTransaksiKedai::filters())->all();
         });
         

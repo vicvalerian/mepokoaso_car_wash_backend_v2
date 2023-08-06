@@ -7,9 +7,25 @@ use App\Models\Jabatan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class JabatanController extends Controller
 {
+    private function generateUuid(){
+        $isDuplicate = true;
+        $duplicateArr = Jabatan::pluck('uuid')->toArray();
+
+        while($isDuplicate){
+            $uuid = Str::orderedUuid()->toString();
+
+            if(!in_array($uuid, $duplicateArr)){
+                $isDuplicate = false;
+            }
+        }    
+        
+        return $uuid;
+    }
+
     public function create(Request $request){
         $storeData = $request->all();
 
@@ -24,6 +40,7 @@ class JabatanController extends Controller
         }
 
         $jabatanData = collect($request)->only(Jabatan::filters())->all();
+        $jabatanData['uuid'] = $this->generateUuid();
         $jabatan = Jabatan::create($jabatanData);
 
         return response([
