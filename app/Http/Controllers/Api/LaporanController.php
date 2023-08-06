@@ -7,6 +7,7 @@ use App\Models\PengeluaranKedai;
 use App\Models\TransaksiKedai;
 use App\Models\TransaksiPencucian;
 use Illuminate\Http\Request;
+use PDF;
 
 class LaporanController extends Controller
 {

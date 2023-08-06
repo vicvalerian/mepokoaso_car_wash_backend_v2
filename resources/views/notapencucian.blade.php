@@ -136,9 +136,6 @@
 				<p>Jl. Singa No.1 BTN Batu Marupa</p>
 				<p>Kendari, Sulawesi Tenggara</p>
 			</address>
-            <table class="balance">
-                <img src="./assets/logo.png" alt="Logo Mepokoaso Car Wash">
-            </table>
 		</header>
 		<article>
 			<table class="balance">
