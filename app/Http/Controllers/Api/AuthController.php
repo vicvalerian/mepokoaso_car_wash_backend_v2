@@ -7,6 +7,8 @@ use App\Models\Karyawan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -48,17 +50,34 @@ class AuthController extends Controller
             ], 400);
         }
 
-        $checkedPass = Hash::check($password, $user->password);
-        if(!$checkedPass){
+        if(auth()->guard('karyawan')->attempt(['username' => request('username'), 'password' => request('password')])){
+            config(['auth.guards.api.provider' => 'karyawan']);
+  
+            $karyawan = Karyawan::with('jabatan')->select('karyawans.*')->find(auth()->guard('karyawan')->user()->id);
+            $success =  $karyawan;
+            $success['token'] =  $karyawan->createToken('Authentication Token')->accessToken; 
+
             return response([
-                'message' => 'Password Anda Salah!',
+                'message' => 'Login Berhasil!',
+                'data' => $success
+            ], 200);
+        } else{
+            return response([
+                'message' => 'Oopss, kata sandi Anda salah',
                 'data' => null
             ], 400);
         }
+    }
 
-        return response([
-            'message' => 'Login Berhasil!',
-            'data' => $user
-        ], 200);
+    public function logout(){
+        $accessToken = auth()->user()->token();
+        DB::table('oauth_refresh_tokens')
+            ->where('access_token_id', $accessToken->id)
+            ->update([
+                'revoked' => true
+            ]);
+
+        $accessToken->revoke();
+        return response(['message' => 'Logout berhasil'], 200);
     }
 }

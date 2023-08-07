@@ -6,10 +6,12 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Passport\HasApiTokens;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Karyawan extends Model
+class Karyawan extends Authenticatable
 {
-    use SoftDeletes;
+    use HasApiTokens, SoftDeletes;
 
     protected $guarded = [
         "id",
@@ -60,5 +62,15 @@ class Karyawan extends Model
         if(!is_null($this->attributes['updated_at'])){
             return Carbon::parse($this->attributes['updated_at'])->format('Y:m:d H:i:s');
         }
+    }
+
+    public function findForPassport(string $username): Karyawan
+    {
+        return $this->where('username', $username)->first();
+    }
+
+    public function validateForPassportPasswordGrant(string $password): bool
+    {
+        return Hash::check($password, $this->password);
     }
 }

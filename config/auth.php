@@ -40,6 +40,17 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        'karyawan' => [
+            'driver' => 'session',
+            'provider' => 'karyawans',
+        ],
+
+        'karyawan-api' => [
+            'driver' => 'passport',
+            'provider' => 'karyawans',
+            'hash'=> false,
+        ],
     ],
 
     /*
@@ -63,6 +74,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
+        ],
+
+        'karyawans' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Karyawan::class,
         ],
 
         // 'users' => [
@@ -93,6 +109,13 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        'karyawans' => [
+            'provider' => 'karyawans',
             'table' => 'password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
