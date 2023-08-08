@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\DetailTransaksiKedai;
+use App\Models\Karyawan;
 use App\Models\MenuKedai;
 use App\Models\TransaksiKedai;
 use Illuminate\Http\Request;
@@ -61,8 +62,6 @@ class TransaksiKedaiController extends Controller
         $storeData = $request->all();
 
         $validator = Validator::make($storeData, [
-            'karyawan_id' => 'required',
-            // 'no_penjualan' => ['required', Rule::unique('transaksi_kedais')->whereNull('deleted_at')],
             'total_penjualan' => 'required|numeric',
             'tgl_penjualan' => 'required',
             'waktu_penjualan' => 'required',
@@ -76,6 +75,7 @@ class TransaksiKedaiController extends Controller
 
         $kedaiData = collect($request)->only(TransaksiKedai::filters())->all();
         $kedaiData['no_penjualan'] = $this->generateNoPenjualan();
+        $kedaiData['karyawan_id'] = auth()->user()->id;
         $kedaiData['uuid'] = $this->generateUuid();
 
         $kedaiMenus = collect($request->detail_transaksi_kedai)->map(function($menu) {
@@ -101,7 +101,7 @@ class TransaksiKedaiController extends Controller
     }
 
     public function update(Request $request, $id){
-        $data = TransaksiKedai::with(['detail_transaksi_kedais'])->where('id', $id)->first();
+        $data = TransaksiKedai::with(['detail_transaksi_kedais'])->where('uuid', $id)->first();
         $detailTransaksi = $data->detail_transaksi_kedais;
 
         if(is_null($data)){
@@ -113,8 +113,6 @@ class TransaksiKedaiController extends Controller
 
         $updateData = $request->all();
         $validator = Validator::make($updateData, [
-            'karyawan_id' => 'required',
-            // 'no_penjualan' => ['required', Rule::unique('transaksi_kedais')->ignore($data->id)->whereNull('deleted_at')],
             'total_penjualan' => 'required|numeric',
             'tgl_penjualan' => 'required',
             'waktu_penjualan' => 'required',
@@ -127,6 +125,7 @@ class TransaksiKedaiController extends Controller
         }
 
         $kedaiData = collect($request)->only(TransaksiKedai::filters())->all();
+        $kedaiData['karyawan_id'] = auth()->user()->id;
         $kedaiMenus = collect($request->detail_transaksi_kedai)->map(function($menu) {
             $menu['uuid'] = $this->generateDetailUuid();
             return collect($menu)->only(DetailTransaksiKedai::filters())->all();
@@ -152,7 +151,7 @@ class TransaksiKedaiController extends Controller
     }
 
     public function delete($id){
-        $data = TransaksiKedai::with(['detail_transaksi_kedais'])->where('id', $id)->first();
+        $data = TransaksiKedai::with(['detail_transaksi_kedais'])->where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -181,7 +180,7 @@ class TransaksiKedaiController extends Controller
     }
 
     public function get($id){
-        $data = TransaksiKedai::with(['karyawan', 'detail_transaksi_kedais', 'menu_kedai'])->where('id', $id)->first();
+        $data = TransaksiKedai::with(['karyawan', 'detail_transaksi_kedais', 'menu_kedai'])->where('uuid', $id)->first();
 
         if(!is_null($data)){
             return response([

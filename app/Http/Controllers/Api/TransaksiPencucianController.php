@@ -78,8 +78,6 @@ class TransaksiPencucianController extends Controller
 
         $validator = Validator::make($storeData, [
             'kendaraan_id' => 'required',
-            'karyawan_id' => 'required',
-            // 'no_pencucian' => ['required', Rule::unique('transaksi_pencucians')->whereNull('deleted_at')],
             'no_polisi' => 'required',
             'jenis_kendaraan' => 'required',
             'tarif_kendaraan' => 'required|numeric',
@@ -95,6 +93,7 @@ class TransaksiPencucianController extends Controller
 
         $pencucianData = collect($request)->only(TransaksiPencucian::filters())->all();
         $pencucianData['no_pencucian'] =  $this->generateNoPencucian();
+        $pencucianData['karyawan_id'] = auth()->user()->id;
         $pencucianData['uuid'] = $this->generateUuid();
 
         $jmlPencuci = count($request->detail_transaksi_pencuci);
@@ -116,7 +115,7 @@ class TransaksiPencucianController extends Controller
     }
 
     public function update(Request $request, $id){
-        $data = TransaksiPencucian::find($id);
+        $data = TransaksiPencucian::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -135,8 +134,6 @@ class TransaksiPencucianController extends Controller
         $updateData = $request->all();
         $validator = Validator::make($updateData, [
             'kendaraan_id' => 'required',
-            'karyawan_id' => 'required',
-            // 'no_pencucian' => ['required', Rule::unique('transaksi_pencucians')->ignore($data->id)->whereNull('deleted_at')],
             'no_polisi' => 'required',
             'jenis_kendaraan' => 'required',
             'tarif_kendaraan' => 'required|numeric',
@@ -151,6 +148,7 @@ class TransaksiPencucianController extends Controller
         }
 
         $pencucianData = collect($request)->only(TransaksiPencucian::filters())->all();
+        $pencucianData['karyawan_id'] = auth()->user()->id;
 
         $jmlPencuci = count($request->detail_transaksi_pencuci);
         $upahPencuci = ($pencucianData['tarif_kendaraan'] * 0.35) / $jmlPencuci;
@@ -172,7 +170,7 @@ class TransaksiPencucianController extends Controller
     }
 
     public function delete($id){
-        $data = TransaksiPencucian::where('id', $id)->first();
+        $data = TransaksiPencucian::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -197,7 +195,7 @@ class TransaksiPencucianController extends Controller
     }
 
     public function get($id){
-        $data = TransaksiPencucian::with(['kendaraan', 'karyawan', 'detail_transaksi_pencucis', 'karyawan_pencucis'])->where('id', $id)->first();
+        $data = TransaksiPencucian::with(['kendaraan', 'karyawan', 'detail_transaksi_pencucis', 'karyawan_pencucis'])->where('uuid', $id)->first();
 
         if(!is_null($data)){
             return response([
@@ -228,7 +226,7 @@ class TransaksiPencucianController extends Controller
     }
 
     public function prosesCuci(Request $request){
-        $transaksi = TransaksiPencucian::with(['kendaraan'])->where('id', $request->id)->first();
+        $transaksi = TransaksiPencucian::with(['kendaraan'])->where('uuid', $request->id)->first();
 
         if($transaksi->jenis_kendaraan == 'Mobil'){
             $jml_transaksi = TransaksiPencucian::where('no_polisi', $transaksi->no_polisi)->count();
@@ -260,7 +258,7 @@ class TransaksiPencucianController extends Controller
     }
 
     public function prosesBayar(Request $request){
-        $transaksi = TransaksiPencucian::with(['kendaraan', 'mobil_pelanggan'])->where('id', $request->id)->first();
+        $transaksi = TransaksiPencucian::with(['kendaraan', 'mobil_pelanggan'])->where('uuid', $request->id)->first();
 
         if($transaksi->mobil_pelanggan){
             $mobilPelanggan = $transaksi->mobil_pelanggan;
@@ -289,7 +287,7 @@ class TransaksiPencucianController extends Controller
     }
 
     public function finish(Request $request){
-        $transaksi = TransaksiPencucian::with(['kendaraan'])->where('id', $request->id)->first();
+        $transaksi = TransaksiPencucian::with(['kendaraan'])->where('uuid', $request->id)->first();
 
         if($transaksi->is_free == true){
             $transaksi->update(['keuntungan' => 0]);
@@ -306,7 +304,7 @@ class TransaksiPencucianController extends Controller
     }
 
     public function cetakNotaPencucian($id){
-        $transaksi = TransaksiPencucian::with(['kendaraan', 'karyawan', 'detail_transaksi_pencucis', 'karyawan_pencucis'])->where('id', $id)->first();
+        $transaksi = TransaksiPencucian::with(['kendaraan', 'karyawan', 'detail_transaksi_pencucis', 'karyawan_pencucis'])->where('uuid', $id)->first();
         $tglWaktu = date('d-m-Y');
 
         $data = [

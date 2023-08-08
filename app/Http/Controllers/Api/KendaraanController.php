@@ -66,7 +66,7 @@ class KendaraanController extends Controller
     }
 
     public function update(Request $request, $id){
-        $data = Kendaraan::find($id);
+        $data = Kendaraan::where('uuid', $id)->first();
         
         if(is_null($data)){
             return response([
@@ -118,7 +118,7 @@ class KendaraanController extends Controller
     }
 
     public function delete($id){
-        $data = Kendaraan::find($id);
+        $data = Kendaraan::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -135,7 +135,7 @@ class KendaraanController extends Controller
     }
 
     public function get($id){
-        $data = Kendaraan::with(['jenis_kendaraan'])->where('id', $id)->first();
+        $data = Kendaraan::with(['jenis_kendaraan'])->where('uuid', $id)->first();
 
         if(!is_null($data)){
             return response([
@@ -175,6 +175,7 @@ class KendaraanController extends Controller
         $list = $kendaraans->transform(function($kendaraan){
             return[
                 'id' => $kendaraan->id,
+                'uuid' => $kendaraan->uuid,
                 'nama' => $kendaraan->nama,
                 'harga' => $kendaraan->harga,
             ];

@@ -105,7 +105,7 @@ class GajiKaryawanController extends Controller
     }
 
     public function updateStatus(Request $request, $id){
-        $data = GajiKaryawan::find($id);
+        $data = GajiKaryawan::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -135,7 +135,7 @@ class GajiKaryawanController extends Controller
     }
 
     public function get($id){
-        $data = GajiKaryawan::with(['karyawan'])->where('id', $id)->first();
+        $data = GajiKaryawan::with(['karyawan'])->where('uuid', $id)->first();
 
         if(!is_null($data)){
             return response([

@@ -52,7 +52,7 @@ class PeminjamanKaryawanController extends Controller
     }
 
     public function update(Request $request, $id){
-        $data = PeminjamanKaryawan::find($id);
+        $data = PeminjamanKaryawan::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -85,7 +85,7 @@ class PeminjamanKaryawanController extends Controller
     }
 
     public function delete($id){
-        $data = PeminjamanKaryawan::with(['karyawan'])->where('id', $id)->first();
+        $data = PeminjamanKaryawan::with(['karyawan'])->where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -102,7 +102,7 @@ class PeminjamanKaryawanController extends Controller
     }
 
     public function get($id){
-        $data = PeminjamanKaryawan::with(['karyawan'])->where('id', $id)->first();
+        $data = PeminjamanKaryawan::with(['karyawan'])->where('uuid', $id)->first();
 
         if(!is_null($data)){
             return response([

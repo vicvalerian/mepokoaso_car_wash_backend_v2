@@ -72,7 +72,7 @@ class KaryawanController extends Controller
     }
 
     public function update(Request $request, $id){
-        $data = Karyawan::find($id);
+        $data = Karyawan::where('uuid', $id)->first();
         
         if(is_null($data)){
             return response([
@@ -128,7 +128,7 @@ class KaryawanController extends Controller
     }
 
     public function delete($id){
-        $data = Karyawan::find($id);
+        $data = Karyawan::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -145,7 +145,7 @@ class KaryawanController extends Controller
     }
 
     public function get($id){
-        $data = Karyawan::with(['jabatan'])->where('id', $id)->first();
+        $data = Karyawan::with(['jabatan'])->where('uuid', $id)->first();
 
         if(!is_null($data)){
             return response([
@@ -220,8 +220,8 @@ class KaryawanController extends Controller
         return $karyawans;
     }
 
-    public function updateProfil(Request $request, $id){
-        $data = Karyawan::find($id);
+    public function updateProfil(Request $request){
+        $data = Karyawan::find(auth()->user()->id);
 
         $storeData = $request->all();
         $validator = Validator::make($storeData, [
@@ -247,8 +247,8 @@ class KaryawanController extends Controller
         ], 200);
     }
 
-    public function updateFoto(Request $request, $id){
-        $data = Karyawan::find($id);
+    public function updateFoto(Request $request){
+        $data = Karyawan::find(auth()->user()->id);
 
         $storeData = $request->all();
         $validator = Validator::make($storeData, [
@@ -283,8 +283,8 @@ class KaryawanController extends Controller
         ], 200);
     }
 
-    public function updatePassword(Request $request, $id){
-        $data = Karyawan::find($id);
+    public function updatePassword(Request $request){
+        $data = Karyawan::find(auth()->user()->id);
 
         $storeData = $request->all();
         $validator = Validator::make($storeData, [
@@ -314,5 +314,21 @@ class KaryawanController extends Controller
             'message' => 'Berhasil Mengubah Kata Sandi',
             'data' => $data,
         ], 200);
+    }
+
+    public function getProfilByUserLogin(){
+        $user = Karyawan::with(['jabatan'])->find(auth()->user()->id);
+
+        if(!is_null($user)){
+            return response([
+                'message' => 'Tampil Data Karyawan Berhasil!',
+                'data' => $user,
+            ], 200);
+        }
+
+        return response([
+            'message' => 'Data Karyawan Tidak Ditemukan',
+            'data' => null,
+        ], 404);
     }
 }

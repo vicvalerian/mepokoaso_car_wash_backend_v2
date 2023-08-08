@@ -48,10 +48,12 @@ class PengeluaranKedaiController extends Controller
 
         if(isset($request->menu_kedai_id)){
             $menuKedai = MenuKedai::find($request->menu_kedai_id);
-            $stokKedai = $menuKedai->stok;
-            $menuKedai->update([
-                'stok' => $stokKedai + $pengeluaranKedaiData['jumlah_barang']
-            ]);
+            if($menuKedai->is_stok){
+                $stokKedai = $menuKedai->stok;
+                $menuKedai->update([
+                    'stok' => $stokKedai + $pengeluaranKedaiData['jumlah_barang']
+                ]);
+            }
         }
 
         $pengeluaranKedai = PengeluaranKedai::create($pengeluaranKedaiData);
@@ -63,7 +65,7 @@ class PengeluaranKedaiController extends Controller
     }
 
     public function update(Request $request, $id){
-        $data = PengeluaranKedai::find($id);
+        $data = PengeluaranKedai::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -91,18 +93,21 @@ class PengeluaranKedaiController extends Controller
 
         if(!is_null($data->menu_kedai_id)){
             $menuKedai = MenuKedai::find($data->menu_kedai_id);
-            $stokKedai = $menuKedai->stok;
 
-            $oldStok = $data->jumlah_barang;
-            $menuKedai->update([
-                'stok' => $stokKedai - $oldStok
-            ]);
+            if($menuKedai->is_stok){
+                $stokKedai = $menuKedai->stok;
 
-            $menuKedaiNew = MenuKedai::find($request->menu_kedai_id);
-            $stokKedaiNew = $menuKedaiNew->stok;
-            $menuKedaiNew->update([
-                'stok' => $stokKedaiNew + $pengeluaranKedaiData['jumlah_barang']
-            ]);
+                $oldStok = $data->jumlah_barang;
+                $menuKedai->update([
+                    'stok' => $stokKedai - $oldStok
+                ]);
+    
+                $menuKedaiNew = MenuKedai::find($request->menu_kedai_id);
+                $stokKedaiNew = $menuKedaiNew->stok;
+                $menuKedaiNew->update([
+                    'stok' => $stokKedaiNew + $pengeluaranKedaiData['jumlah_barang']
+                ]);
+            }
         }
 
         $data->update($pengeluaranKedaiData);
@@ -114,7 +119,7 @@ class PengeluaranKedaiController extends Controller
     }
 
     public function delete($id){
-        $data = PengeluaranKedai::where('id', $id)->first();
+        $data = PengeluaranKedai::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -131,7 +136,7 @@ class PengeluaranKedaiController extends Controller
     }
 
     public function get($id){
-        $data = PengeluaranKedai::with(['menu_kedai'])->where('id', $id)->first();
+        $data = PengeluaranKedai::with(['menu_kedai'])->where('uuid', $id)->first();
 
         if(!is_null($data)){
             return response([

@@ -52,7 +52,7 @@ class MenuKedaiController extends Controller
     }
 
     public function update(Request $request, $id){
-        $data = MenuKedai::find($id);
+        $data = MenuKedai::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -85,7 +85,7 @@ class MenuKedaiController extends Controller
     }
 
     public function delete($id){
-        $data = MenuKedai::where('id', $id)->first();
+        $data = MenuKedai::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -102,7 +102,7 @@ class MenuKedaiController extends Controller
     }
 
     public function get($id){
-        $data = MenuKedai::where('id', $id)->first();
+        $data = MenuKedai::where('uuid', $id)->first();
 
         if(!is_null($data)){
             return response([
@@ -134,7 +134,7 @@ class MenuKedaiController extends Controller
 
     public function listMenuKedai(){
         $list = [];
-        $menus = MenuKedai::get();
+        $menus = MenuKedai::where('is_stok', true)->get();
         
         $list = $menus->transform(function($menu){
             return[

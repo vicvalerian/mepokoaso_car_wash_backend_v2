@@ -50,7 +50,7 @@ class JabatanController extends Controller
     }
 
     public function update(Request $request, $id){
-        $data = Jabatan::find($id);
+        $data = Jabatan::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -80,7 +80,7 @@ class JabatanController extends Controller
     }
 
     public function delete($id){
-        $data = Jabatan::find($id);
+        $data = Jabatan::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -97,7 +97,7 @@ class JabatanController extends Controller
     }
 
     public function get($id){
-        $data = Jabatan::find($id);
+        $data = Jabatan::where('uuid', $id)->first();
 
         if(!is_null($data)){
             return response([

@@ -64,7 +64,7 @@ class JenisKendaraanController extends Controller
     }
 
     public function update(Request $request, $id){
-        $data = JenisKendaraan::find($id);
+        $data = JenisKendaraan::where('uuid', $id)->first();
         
         if(is_null($data)){
             return response([
@@ -114,7 +114,7 @@ class JenisKendaraanController extends Controller
     }
 
     public function delete($id){
-        $data = JenisKendaraan::find($id);
+        $data = JenisKendaraan::where('uuid', $id)->first();
 
         if(is_null($data)){
             return response([
@@ -131,7 +131,7 @@ class JenisKendaraanController extends Controller
     }
 
     public function get($id){
-        $data = JenisKendaraan::find($id);
+        $data = JenisKendaraan::where('uuid', $id)->first();
 
         if(!is_null($data)){
             return response([
