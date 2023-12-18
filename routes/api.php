@@ -130,4 +130,10 @@ Route::group(['middleware' => ['auth:karyawan-api'] ], function() {
     Route::get('laporan/transaksi-kedai', 'Api\LaporanController@generateLaporanKedai');
     Route::get('laporan/pengeluaran-kedai', 'Api\LaporanController@generateLaporanPengeluaranKedai');
 
+    // Pembelanjaan Harian
+    Route::post('pembelanjaan-harian', 'Api\PembelanjaanHarianController@create');
+    Route::post('pembelanjaan-harian/{id}', 'Api\PembelanjaanHarianController@update');
+    Route::delete('pembelanjaan-harian/{id}', 'Api\PembelanjaanHarianController@delete');
+    Route::get('pembelanjaan-harian/{id}', 'Api\PembelanjaanHarianController@get');
+    Route::get('pembelanjaan-harian', 'Api\PembelanjaanHarianController@getAll');
 });
