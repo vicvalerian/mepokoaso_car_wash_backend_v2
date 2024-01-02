@@ -146,13 +146,19 @@ class JenisKendaraanController extends Controller
         ], 404);
     }
 
-    public function getAll(){
-        $data = JenisKendaraan::get();
+    public function getAll(Request $request){
 
-        return response([
-            'message' => 'Tampil Data Jenis Kendaraan Berhasil!',
-            'data' => $data,
-        ], 200);
+        $per_page = (!is_null($request->per_page)) ? $request->per_page : 10;
+        $keyword = $request->keyword;
+        $data = JenisKendaraan::select()
+        ->orderBy("updated_at", "desc");
+        if($keyword){
+            $data->where(function ($q) use ($keyword){
+				$q->where('nama', "like", "%" . $keyword . "%");
+            });
+        }
+
+        return $data->paginate($per_page);
     }
 
     public function listJenisKendaraan(){
