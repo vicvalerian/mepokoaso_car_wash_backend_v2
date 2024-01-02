@@ -112,13 +112,18 @@ class JabatanController extends Controller
         ], 404);
     }
 
-    public function getAll(){
-        $data = Jabatan::get();
+    public function getAll(Request $request){
+        $per_page = (!is_null($request->per_page)) ? $request->per_page : 10;
+        $keyword = $request->keyword;
+        $data = Jabatan::select()
+        ->orderBy("updated_at", "desc");
+        if($keyword){
+            $data->where(function ($q) use ($keyword){
+				$q->where('nama', "like", "%" . $keyword . "%");
+            });
+        }
 
-        return response([
-            'message' => 'Tampil Data Jabatan Berhasil!',
-            'data' => $data,
-        ], 200);
+        return $data->paginate($per_page);
     }
 
     public function listJabatan(){
