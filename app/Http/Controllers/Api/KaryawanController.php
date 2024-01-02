@@ -160,13 +160,29 @@ class KaryawanController extends Controller
         ], 404);
     }
 
-    public function getAll(){
-        $data = Karyawan::with(['jabatan'])->get();
+    public function getAll(Request $request){
+        $per_page = (!is_null($request->per_page)) ? $request->per_page : 10;
+        $keyword = $request->keyword;
 
-        return response([
-            'message' => 'Tampil Data Karyawan Berhasil!',
-            'data' => $data,
-        ], 200);
+        $data = Karyawan::with(['jabatan'])->select()
+            ->orderBy("updated_at", "desc");
+
+        if($keyword){
+            $data->where(function ($q) use ($keyword){
+				$q->where('nama', "like", "%" . $keyword . "%");
+				$q->orWhere('no_telp', "like", "%" . $keyword . "%");
+				$q->orWhere('gaji', "like", "%" . $keyword . "%");
+            });
+        }
+
+        return $data->paginate($per_page);
+
+        // $data = Karyawan::with(['jabatan'])->get();
+
+        // return response([
+        //     'message' => 'Tampil Data Karyawan Berhasil!',
+        //     'data' => $data,
+        // ], 200);
     }
 
     public function listKaryawan(){
