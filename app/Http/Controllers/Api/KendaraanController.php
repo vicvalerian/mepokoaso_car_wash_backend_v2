@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\JenisKendaraan;
 use App\Models\Kendaraan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -151,21 +152,22 @@ class KendaraanController extends Controller
     }
 
     public function getAll(Request $request){
-        $jenis = @$request->jenis;
+        $per_page = (!is_null($request->per_page)) ? $request->per_page : 10;
+        $keyword = $request->keyword;
 
-        if($jenis){
-            $data = Kendaraan::with(['jenis_kendaraan'])
-            ->whereHas('jenis_kendaraan', function($q) use($jenis){
-                $q->where('nama', $jenis);
-            })->orderBy("nama", "asc")->get();
-        } else{
-            $data = Kendaraan::with(['jenis_kendaraan'])->orderBy("nama", "asc")->get();
+        $data = Kendaraan::with(['jenis_kendaraan'])->select()
+        ->orderBy("updated_at", "desc");
+
+        if($keyword){
+            $data->where(function ($q) use ($keyword){
+				$q->where('nama', "like", "%" . $keyword . "%");
+                $q->orWhereHas('jenis_kendaraan', function($qq) use($keyword){
+                    $qq->where('nama', "like", "%" . $keyword . "%");
+                });
+            });
         }
 
-        return response([
-            'message' => 'Tampil Data Kendaraan Berhasil!',
-            'data' => $data,
-        ], 200);
+        return $data->paginate($per_page);
     }
 
     public function listKendaraan(){
