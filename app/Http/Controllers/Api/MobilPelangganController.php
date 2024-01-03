@@ -25,14 +25,20 @@ class MobilPelangganController extends Controller
         ], 404);
     }
 
-    public function getAll(){
+    public function getAll(Request $request){
+        $per_page = (!is_null($request->per_page)) ? $request->per_page : 10;
+        $keyword = $request->keyword;
+        $data = MobilPelanggan::with(['transaksis'])
+        ->orderBy("updated_at", "desc");
 
-        $data = MobilPelanggan::with(['transaksis'])->get();
+        if($keyword){
+            $data->where(function ($q) use ($keyword){
+				$q->where('nama_kendaraan', "like", "%" . $keyword . "%");
+				$q->orWhere('no_polisi', "like", "%" . $keyword . "%");
+            });
+        }
 
-        return response([
-            'message' => 'Tampil Data Mobil Pelanggan Berhasil!',
-            'data' => $data,
-        ], 200);
+        return $data->paginate($per_page);
     }
 
     public function getTransaksiByMobilPelanggan($id){
