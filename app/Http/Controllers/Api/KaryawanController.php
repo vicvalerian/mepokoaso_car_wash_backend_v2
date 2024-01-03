@@ -187,7 +187,7 @@ class KaryawanController extends Controller
 
     public function listKaryawan(){
         $list = [];
-        $karyawans = Karyawan::where('status', 'Aktif')->get();
+        $karyawans = Karyawan::get();
         
         $list = $karyawans->transform(function($karyawan){
             return[

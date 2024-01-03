@@ -32,7 +32,7 @@ class PeminjamanKaryawanController extends Controller
             'karyawan_id' => 'required',
             'tgl_peminjaman' => 'required',
             'nominal' => 'required|numeric',
-            'alasan' => 'required',
+            // 'alasan' => 'required',
         ]);
 
         if($validator->fails()){
@@ -66,7 +66,7 @@ class PeminjamanKaryawanController extends Controller
             'karyawan_id' => 'required',
             'tgl_peminjaman' => 'required',
             'nominal' => 'required|numeric',
-            'alasan' => 'required',
+            // 'alasan' => 'required',
         ]);
 
         if($validator->fails()){
@@ -118,20 +118,22 @@ class PeminjamanKaryawanController extends Controller
     }
 
     public function getAll(Request $request){
-        $karyawan = @$request->karyawan;
+        $per_page = (!is_null($request->per_page)) ? $request->per_page : 10;
+        $keyword = $request->keyword;
 
-        if($karyawan){
-            $data = PeminjamanKaryawan::with(['karyawan'])
-            ->whereHas('karyawan', function($q) use($karyawan){
-                $q->where('nama', $karyawan);
-            })->get();
-        } else{
-            $data = PeminjamanKaryawan::with(['karyawan'])->get();
+        $data = PeminjamanKaryawan::with(['karyawan'])->select()
+        ->orderBy("updated_at", "desc");
+
+        if($keyword){
+            $data->where(function ($q) use ($keyword){
+				$q->where('tgl_peminjaman', "like", "%" . $keyword . "%");
+				$q->orWhere('nominal', "like", "%" . $keyword . "%");
+                $q->orWhereHas('karyawan', function($qq) use($keyword){
+                    $qq->where('nama', "like", "%" . $keyword . "%");
+                });
+            });
         }
 
-        return response([
-            'message' => 'Tampil Data Peminjaman Karyawan Berhasil!',
-            'data' => $data,
-        ], 200);
+        return $data->paginate($per_page);
     }
 }
