@@ -151,13 +151,30 @@ class PengeluaranKedaiController extends Controller
         ], 404);
     }
 
-    public function getAll(){
+    public function getAll(Request $request){
 
-        $data = PengeluaranKedai::with(['menu_kedai'])->get();
+        // $data = PengeluaranKedai::with(['menu_kedai'])->get();
 
-        return response([
-            'message' => 'Tampil Data Pengeluaran Kedai Berhasil!',
-            'data' => $data,
-        ], 200);
+        // return response([
+        //     'message' => 'Tampil Data Pengeluaran Kedai Berhasil!',
+        //     'data' => $data,
+        // ], 200);
+
+        $per_page = (!is_null($request->per_page)) ? $request->per_page : 10;
+        $keyword = $request->keyword;
+
+        $data = PengeluaranKedai::with(['menu_kedai'])->select()
+        ->orderBy("updated_at", "desc");
+
+        if($keyword){
+            $data->where(function ($q) use ($keyword){
+				$q->where('nama_barang', "like", "%" . $keyword . "%");
+				$q->orWhere('tgl_pembelian', "like", "%" . $keyword . "%");
+				$q->orWhere('jumlah_barang', "like", "%" . $keyword . "%");
+				$q->orWhere('harga_pembelian', "like", "%" . $keyword . "%");
+            });
+        }
+
+        return $data->paginate($per_page);
     }
 }
