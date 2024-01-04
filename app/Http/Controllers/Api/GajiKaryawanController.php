@@ -151,27 +151,45 @@ class GajiKaryawanController extends Controller
     }
 
     public function getAll(Request $request){
-        $karyawan = @$request->karyawan;
+        $per_page = (!is_null($request->per_page)) ? $request->per_page : 10;
+        $keyword = $request->keyword;
 
-        if($karyawan){
-            $data = GajiKaryawan::with(['karyawan'])
-            ->whereHas('karyawan', function($q) use($karyawan){
-                $q->where('nama', $karyawan);
-            })->get();
-        } else{
-            $data = GajiKaryawan::with(['karyawan'])->get();
+        $data = GajiKaryawan::with(['karyawan'])
+        ->orderBy("updated_at", "desc");
+
+        if($keyword){
+            $data->where(function ($q) use ($keyword){
+				$q->where('bulan', "like", "%" . $keyword . "%");
+				$q->orWhere('tahun', "like", "%" . $keyword . "%");
+                $q->orWhereHas('karyawan', function($qq) use($keyword){
+                    $qq->where('nama', "like", "%" . $keyword . "%");
+                });
+            });
         }
 
-        foreach($data as $gaji){
+        $data = $data->paginate($per_page);
+
+        $data->transform(function ($gaji) {
             $gaji->formatBulan = $this->fetchMonth($gaji->bulan);
-        }
+            return $gaji;
+        });
 
-        $data = $data->sortByDesc('formatBulan')->sortByDesc('tahun')->values();
+        // $data = $data->sortByDesc('formatBulan')->sortByDesc('tahun')->values();
+        $sortedData = $data->getCollection()->sortBy('formatBulan')->sortBy('tahun');
 
-        return response([
-            'message' => 'Tampil Data Gaji Karyawan Berhasil!',
-            'data' => $data,
-        ], 200);
+        // Create a new paginated instance from the sorted collection
+        $paginatedData = new \Illuminate\Pagination\LengthAwarePaginator(
+            $sortedData->values(), // Apply values() to reset keys
+            $data->total(),
+            $data->perPage(),
+            $data->currentPage(),
+            [
+                'path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(),
+                'pageName' => 'page',
+            ]
+        );
+
+        return $paginatedData;
     }
 
     private function fetchMonth($value){
