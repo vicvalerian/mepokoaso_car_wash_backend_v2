@@ -195,13 +195,31 @@ class TransaksiKedaiController extends Controller
         ], 404);
     }
 
-    public function getAll(){
-        $data = TransaksiKedai::with(['karyawan', 'detail_transaksi_kedais', 'menu_kedai'])->orderBy("updated_at", "desc")->get();
+    public function getAll(Request $request){
+        // $data = TransaksiKedai::with(['karyawan', 'detail_transaksi_kedais', 'menu_kedai'])->orderBy("updated_at", "desc")->get();
 
-        return response([
-            'message' => 'Tampil Data Transaksi Kedai Berhasil!',
-            'data' => $data,
-        ], 200);
+        $per_page = (!is_null($request->per_page)) ? $request->per_page : 10;
+        $keyword = $request->keyword;
+
+        $data = TransaksiKedai::with(['karyawan', 'detail_transaksi_kedais', 'menu_kedai'])->select()
+        ->orderBy("updated_at", "desc");
+        if($keyword){
+            $data->where(function ($q) use ($keyword){
+				$q->where('no_penjualan', "like", "%" . $keyword . "%");
+				$q->orWhere('total_penjualan', "like", "%" . $keyword . "%");
+				$q->orWhere('waktu_penjualan', "like", "%" . $keyword . "%");
+                $q->orWhereHas('karyawan', function($qq) use($keyword){
+                    $qq->where('nama', "like", "%" . $keyword . "%");
+                });
+            });
+        }
+
+        return $data->paginate($per_page);
+
+        // return response([
+        //     'message' => 'Tampil Data Transaksi Kedai Berhasil!',
+        //     'data' => $data,
+        // ], 200);
     }
 
     private function calculateKedaiStokDekremen($datas){

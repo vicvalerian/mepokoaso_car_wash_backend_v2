@@ -83,6 +83,7 @@ Route::group(['middleware' => ['auth:karyawan-api'] ], function() {
     Route::delete('menu-kedai/{id}', 'Api\MenuKedaiController@delete');
     Route::get('menu-kedai/{id}', 'Api\MenuKedaiController@get');
     Route::get('menu-kedai', 'Api\MenuKedaiController@getAll');
+    Route::get('menu-kedai-jenis', 'Api\MenuKedaiController@getAllByJenis');
     Route::get('list-selection-menu-kedai', 'Api\MenuKedaiController@listMenuKedai');
 
     //Pengeluaran Kedai

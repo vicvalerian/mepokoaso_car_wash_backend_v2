@@ -146,4 +146,28 @@ class MenuKedaiController extends Controller
         });
         return $list;
     }
+
+    public function getAllByJenis(Request $request){
+        $jenis = @$request->jenis;
+        $keyword = $request->keyword;
+
+        if($jenis){
+            $data = MenuKedai::where('jenis', $jenis)->orderBy("nama", "asc");
+        } else{
+            $data = MenuKedai::orderBy("nama", "asc");
+        }
+
+        if($keyword){
+            $data->where(function ($q) use ($keyword){
+				$q->where('nama', "like", "%" . $keyword . "%");
+            });
+        }
+
+        $data = $data->get();
+
+        return response([
+            'message' => 'Tampil Data Menu Kedai Berhasil!',
+            'data' => $data,
+        ], 200);
+    }
 }
