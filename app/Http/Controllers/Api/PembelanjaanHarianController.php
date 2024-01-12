@@ -115,12 +115,22 @@ class PembelanjaanHarianController extends Controller
         ], 404);
     }
 
-    public function getAll(){
-        $data = PembelanjaanHarian::get();
+    public function getAll(Request $request){
 
-        return response([
-            'message' => 'Tampil Data Pembelanjaan Harian Berhasil!',
-            'data' => $data,
-        ], 200);
+        $per_page = (!is_null($request->per_page)) ? $request->per_page : 10;
+        $keyword = $request->keyword;
+
+        $data = PembelanjaanHarian::select()
+        ->orderBy("updated_at", "desc");
+
+        if($keyword){
+            $data->where(function ($q) use ($keyword){
+				$q->where('nama', "like", "%" . $keyword . "%");
+				$q->orWhere('harga', "like", "%" . $keyword . "%");
+				$q->orWhere('tgl_belanja', "like", "%" . $keyword . "%");
+            });
+        }
+
+        return $data->paginate($per_page);
     }
 }
