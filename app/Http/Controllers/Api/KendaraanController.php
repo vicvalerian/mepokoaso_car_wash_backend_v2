@@ -180,6 +180,7 @@ class KendaraanController extends Controller
                 'uuid' => $kendaraan->uuid,
                 'nama' => $kendaraan->nama,
                 'harga' => $kendaraan->harga,
+                'tipe' => $kendaraan->tipe,
             ];
         });
         return $list;

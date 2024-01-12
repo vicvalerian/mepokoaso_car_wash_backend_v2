@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\DetailTransaksiPencuci;
+use App\Models\Kendaraan;
 use App\Models\MobilPelanggan;
 use App\Models\TransaksiPencucian;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -78,7 +80,7 @@ class TransaksiPencucianController extends Controller
 
         $validator = Validator::make($storeData, [
             'kendaraan_id' => 'required',
-            'no_polisi' => 'required',
+            // 'no_polisi' => 'required',
             'jenis_kendaraan' => 'required',
             'tarif_kendaraan' => 'required|numeric',
             'tgl_pencucian' => 'required',
@@ -105,6 +107,48 @@ class TransaksiPencucianController extends Controller
             return collect($pencuci)->only(DetailTransaksiPencuci::filters())->all();
         });
 
+        if($pencucianData['is_free']){
+            $pencucianData['total_pembayaran'] = 0;
+        } else {
+            $pencucianData['total_pembayaran'] = $pencucianData['tarif_kendaraan'];
+        }
+
+        if($pencucianData['is_save_mobil_pelanggan']){
+            if($pencucianData['jenis_kendaraan'] == 'Mobil'){
+                $kendaraan = Kendaraan::find($pencucianData['kendaraan_id']);
+                $jml_transaksi = TransaksiPencucian::where('no_polisi', $pencucianData['no_polisi'])->count();
+
+                $mobilPelanggan = MobilPelanggan::where('no_polisi', $pencucianData['no_polisi'])->where('nama_kendaraan', $kendaraan->nama)->first();
+                if($mobilPelanggan){
+                    $mobilPelanggan->update([
+                        'jml_transaksi' => $jml_transaksi,    
+                    ]);
+
+                    $pencucianData['mobil_pelanggan_id'] = $mobilPelanggan->id;
+                } else{
+                    $createMobilPelanggan = MobilPelanggan::create([
+                        'uuid' => $this->generateMobilPelangganUuid(),
+                        'no_polisi' => $pencucianData['no_polisi'],
+                        'nama_kendaraan' => $kendaraan->nama,
+                        'jml_transaksi' => $jml_transaksi,
+                    ]);
+
+                    $pencucianData['mobil_pelanggan_id'] = $createMobilPelanggan->id;
+                }
+            }
+        }
+
+        if($pencucianData['status'] == 'Lunas'){
+            $pencucianData['paid_at'] = Carbon::now();
+
+            if($pencucianData['is_free']){
+                $pencucianData['keuntungan'] = 0;
+            } else{
+                $keuntungan = $pencucianData['tarif_kendaraan'] * 0.65;
+                $pencucianData['keuntungan'] = $keuntungan;
+            }
+        }
+
         $transaksiPencucian = TransaksiPencucian::create($pencucianData);
         $transaksiPencucian->detail_transaksi_pencucis()->createMany($pencucianPencucis);
 
@@ -124,7 +168,7 @@ class TransaksiPencucianController extends Controller
             ], 404);
         }
 
-        if($data->status != 'Baru'){
+        if($data->status != 'Belum Bayar'){
             return response([
                 'message' => 'Data Transaksi Pencucian Sudah Diproses!',
                 'data' => null
@@ -134,7 +178,7 @@ class TransaksiPencucianController extends Controller
         $updateData = $request->all();
         $validator = Validator::make($updateData, [
             'kendaraan_id' => 'required',
-            'no_polisi' => 'required',
+            // 'no_polisi' => 'required',
             'jenis_kendaraan' => 'required',
             'tarif_kendaraan' => 'required|numeric',
             'tgl_pencucian' => 'required',
@@ -159,6 +203,48 @@ class TransaksiPencucianController extends Controller
             return collect($pencuci)->only(DetailTransaksiPencuci::filters())->all();
         });
 
+        if($pencucianData['is_free']){
+            $pencucianData['total_pembayaran'] = 0;
+        } else{
+            $pencucianData['total_pembayaran'] = $pencucianData['tarif_kendaraan'];
+        }
+
+        if($pencucianData['is_save_mobil_pelanggan']){
+            if($pencucianData['jenis_kendaraan'] == 'Mobil'){
+                $kendaraan = Kendaraan::find($pencucianData['kendaraan_id']);
+                $jml_transaksi = TransaksiPencucian::where('no_polisi', $pencucianData['no_polisi'])->count();
+
+                $mobilPelanggan = MobilPelanggan::where('no_polisi', $pencucianData['no_polisi'])->where('nama_kendaraan', $kendaraan->nama)->first();
+                if($mobilPelanggan){
+                    $mobilPelanggan->update([
+                        'jml_transaksi' => $jml_transaksi,
+                    ]);
+
+                    $pencucianData['mobil_pelanggan_id'] = $mobilPelanggan->id;
+                } else{
+                    $createMobilPelanggan = MobilPelanggan::create([
+                        'uuid' => $this->generateMobilPelangganUuid(),
+                        'no_polisi' => $pencucianData['no_polisi'],
+                        'nama_kendaraan' => $kendaraan->nama,
+                        'jml_transaksi' => $jml_transaksi,
+                    ]);
+
+                    $pencucianData['mobil_pelanggan_id'] = $createMobilPelanggan->id;
+                }
+            }
+        }
+
+        if($pencucianData['status'] == 'Lunas'){
+            $pencucianData['paid_at'] = Carbon::now();
+
+            if($pencucianData['is_free']){
+                $pencucianData['keuntungan'] = 0;
+            } else{
+                $keuntungan = $pencucianData['tarif_kendaraan'] * 0.65;
+                $pencucianData['keuntungan'] = $keuntungan;
+            }
+        }
+
         $data->update($pencucianData);
         $data->detail_transaksi_pencucis()->delete();
         $data->detail_transaksi_pencucis()->createMany($pencucianPencucis);
@@ -179,7 +265,7 @@ class TransaksiPencucianController extends Controller
             ], 404);
         }
 
-        if($data->status != 'Baru'){
+        if($data->status != 'Belum Bayar'){
             return response([
                 'message' => 'Data Transaksi Pencucian Sudah Diproses!',
                 'data' => null
@@ -212,79 +298,99 @@ class TransaksiPencucianController extends Controller
 
     public function getAll(Request $request){
         $status = @$request->status;
+        $per_page = (!is_null($request->per_page)) ? $request->per_page : 10;
+        $keyword = $request->keyword;
+
+        $data = TransaksiPencucian::with(['kendaraan', 'karyawan', 'detail_transaksi_pencucis', 'karyawan_pencucis'])
+        ->select()
+        ->orderBy("updated_at", "desc");
+
+        if($keyword){
+            $data->where(function ($q) use ($keyword){
+				$q->where('no_polisi', "like", "%" . $keyword . "%");
+				$q->orWhere('tgl_pencucian', "like", "%" . $keyword . "%");
+                $q->orWhereHas('karyawan', function($qq) use($keyword){
+                    $qq->where('nama', "like", "%" . $keyword . "%");
+                });
+                $q->orWhereHas('kendaraan', function($qq) use($keyword){
+                    $qq->where('nama', "like", "%" . $keyword . "%");
+                });
+            });
+            
+        }
 
 		if($status){
-			$data = TransaksiPencucian::with(['kendaraan', 'karyawan', 'detail_transaksi_pencucis', 'karyawan_pencucis'])->orderBy("updated_at", "desc")->where('status', $status)->get();
-		} else{
-            $data = TransaksiPencucian::with(['kendaraan', 'karyawan', 'detail_transaksi_pencucis', 'karyawan_pencucis'])->orderBy("updated_at", "desc")->get();
-        }
+            $data = $data->where('status', $status);
+		}
+        
+        return $data->paginate($per_page);
 
-        return response([
-            'message' => 'Tampil Data Transaksi Pencucian Berhasil!',
-            'data' => $data,
-        ], 200);
+        // return response([
+        //     'message' => 'Tampil Data Transaksi Pencucian Berhasil!',
+        //     'data' => $data,
+        // ], 200);
     }
 
-    public function prosesCuci(Request $request){
-        $transaksi = TransaksiPencucian::with(['kendaraan'])->where('uuid', $request->id)->first();
+    // public function prosesCuci(Request $request){
+    //     $transaksi = TransaksiPencucian::with(['kendaraan'])->where('uuid', $request->id)->first();
 
-        if($transaksi->jenis_kendaraan == 'Mobil'){
-            $jml_transaksi = TransaksiPencucian::where('no_polisi', $transaksi->no_polisi)->count();
+    //     if($transaksi->jenis_kendaraan == 'Mobil'){
+    //         $jml_transaksi = TransaksiPencucian::where('no_polisi', $transaksi->no_polisi)->count();
 
-            $mobilPelanggan = MobilPelanggan::where('no_polisi', $transaksi->no_polisi)->where('nama_kendaraan', $transaksi->kendaraan->nama)->first();
-            if($mobilPelanggan){
-                $mobilPelanggan->update([
-                    'jml_transaksi' => $jml_transaksi,    
-                ]);
+    //         $mobilPelanggan = MobilPelanggan::where('no_polisi', $transaksi->no_polisi)->where('nama_kendaraan', $transaksi->kendaraan->nama)->first();
+    //         if($mobilPelanggan){
+    //             $mobilPelanggan->update([
+    //                 'jml_transaksi' => $jml_transaksi,    
+    //             ]);
 
-                $transaksi->update(['mobil_pelanggan_id' => $mobilPelanggan->id]);
-            } else{
-                $createMobilPelanggan = MobilPelanggan::create([
-                    'uuid' => $this->generateMobilPelangganUuid(),
-                    'no_polisi' => $transaksi->no_polisi,
-                    'nama_kendaraan' => $transaksi->kendaraan->nama,
-                    'jml_transaksi' => $jml_transaksi,
-                ]);
+    //             $transaksi->update(['mobil_pelanggan_id' => $mobilPelanggan->id]);
+    //         } else{
+    //             $createMobilPelanggan = MobilPelanggan::create([
+    //                 'uuid' => $this->generateMobilPelangganUuid(),
+    //                 'no_polisi' => $transaksi->no_polisi,
+    //                 'nama_kendaraan' => $transaksi->kendaraan->nama,
+    //                 'jml_transaksi' => $jml_transaksi,
+    //             ]);
 
-                $transaksi->update(['mobil_pelanggan_id' => $createMobilPelanggan->id]);
-            }
-        }
+    //             $transaksi->update(['mobil_pelanggan_id' => $createMobilPelanggan->id]);
+    //         }
+    //     }
 
-        $transaksi->update(['status' => 'Proses Cuci']);
+    //     $transaksi->update(['status' => 'Proses Cuci']);
 
-        return response([
-            'message' => 'Berhasil Mengubah Status Transaksi Pencucian',
-        ], 200);
-    }
+    //     return response([
+    //         'message' => 'Berhasil Mengubah Status Transaksi Pencucian',
+    //     ], 200);
+    // }
 
-    public function prosesBayar(Request $request){
-        $transaksi = TransaksiPencucian::with(['kendaraan', 'mobil_pelanggan'])->where('uuid', $request->id)->first();
+    // public function prosesBayar(Request $request){
+    //     $transaksi = TransaksiPencucian::with(['kendaraan', 'mobil_pelanggan'])->where('uuid', $request->id)->first();
 
-        if($transaksi->mobil_pelanggan){
-            $mobilPelanggan = $transaksi->mobil_pelanggan;
+    //     if($transaksi->mobil_pelanggan){
+    //         $mobilPelanggan = $transaksi->mobil_pelanggan;
 
-            if(($mobilPelanggan->jml_transaksi % 6) == 0){
-                $transaksi->update([
-                    'is_free' => true,
-                    'total_pembayaran' => 0,
-                ]);
-            } else{
-                $transaksi->update([
-                    'total_pembayaran' => $transaksi->tarif_kendaraan
-                ]);
-            }
-        } else{
-            $transaksi->update([
-                'total_pembayaran' => $transaksi->tarif_kendaraan
-            ]);
-        }
+    //         if(($mobilPelanggan->jml_transaksi % 6) == 0){
+    //             $transaksi->update([
+    //                 'is_free' => true,
+    //                 'total_pembayaran' => 0,
+    //             ]);
+    //         } else{
+    //             $transaksi->update([
+    //                 'total_pembayaran' => $transaksi->tarif_kendaraan
+    //             ]);
+    //         }
+    //     } else{
+    //         $transaksi->update([
+    //             'total_pembayaran' => $transaksi->tarif_kendaraan
+    //         ]);
+    //     }
 
-        $transaksi->update(['status' => 'Proses Bayar']);
+    //     $transaksi->update(['status' => 'Proses Bayar']);
 
-        return response([
-            'message' => 'Berhasil Mengubah Status Transaksi Pencucian',
-        ], 200);
-    }
+    //     return response([
+    //         'message' => 'Berhasil Mengubah Status Transaksi Pencucian',
+    //     ], 200);
+    // }
 
     public function finish(Request $request){
         $transaksi = TransaksiPencucian::with(['kendaraan'])->where('uuid', $request->id)->first();
@@ -292,11 +398,14 @@ class TransaksiPencucianController extends Controller
         if($transaksi->is_free == true){
             $transaksi->update(['keuntungan' => 0]);
         } else if($transaksi->is_free == false){
-            $keuntungan = $transaksi->tarif_kendaraan * 0.65;
+            $keuntungan = $transaksi->total_pembayaran * 0.65;
             $transaksi->update(['keuntungan' => $keuntungan]);
         }
 
-        $transaksi->update(['status' => 'Selesai']);
+        $transaksi->update([
+            'status' => 'Lunas',
+            'paid_at'=> Carbon::now()
+        ]);
 
         return response([
             'message' => 'Berhasil Mengubah Status Transaksi Pencucian',
