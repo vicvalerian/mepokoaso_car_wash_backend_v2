@@ -172,6 +172,9 @@ class KaryawanController extends Controller
 				$q->where('nama', "like", "%" . $keyword . "%");
 				$q->orWhere('no_telp', "like", "%" . $keyword . "%");
 				$q->orWhere('gaji', "like", "%" . $keyword . "%");
+                $q->orWhereHas('jabatan', function($qq) use($keyword){
+                    $qq->where('nama', "like", "%" . $keyword . "%");
+                });
             });
         }
 

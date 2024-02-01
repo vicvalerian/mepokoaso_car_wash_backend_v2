@@ -34,7 +34,7 @@ class KendaraanController extends Controller
             'jenis_kendaraan_id' => 'required',
             'nama' => 'required',
             'harga' => 'required|numeric',
-            'foto' => 'required|mimes:jpeg,bmp,png',
+            // 'foto' => 'required|mimes:jpeg,bmp,png',
         ]);
 
         if($validator->fails()){
@@ -45,17 +45,20 @@ class KendaraanController extends Controller
 
         $kendaraanData = collect($request)->only(Kendaraan::filters())->all();
         
-        $image_name = 'gambar'.\Str::random(5).str_replace(' ', '', $kendaraanData['nama']).\Str::random(5);
-        $file = $kendaraanData['foto'];
-        $extension = $file->getClientOriginalExtension();
+        if(isset($kendaraanData['foto'])){
+            $image_name = 'gambar'.\Str::random(5).str_replace(' ', '', $kendaraanData['nama']).\Str::random(5);
+            $file = $kendaraanData['foto'];
+            $extension = $file->getClientOriginalExtension();
+    
+            $uploadDoc = $request->foto->storeAs(
+                'img_kendaraan',
+                $image_name.'.'.$extension,
+                ['disk' => 'public']
+            );
+    
+            $kendaraanData['foto'] = $uploadDoc;
+        }
 
-        $uploadDoc = $request->foto->storeAs(
-            'img_kendaraan',
-            $image_name.'.'.$extension,
-            ['disk' => 'public']
-        );
-
-        $kendaraanData['foto'] = $uploadDoc;
         $kendaraanData['uuid'] = $this->generateUuid();
 
         $kendaraan = Kendaraan::create($kendaraanData);
@@ -82,7 +85,7 @@ class KendaraanController extends Controller
             'jenis_kendaraan_id' => 'required',
             'nama' => 'required',
             'harga' => 'required|numeric',
-            'foto' => 'nullable|mimes:jpeg,bmp,png',
+            // 'foto' => 'nullable|mimes:jpeg,bmp,png',
         ]);
 
         if($validator->fails()){
