@@ -29,6 +29,13 @@ Route::group(['middleware' => ['auth:karyawan-api'] ], function() {
     //Logout
     Route::get('logout', 'Api\AuthController@logout');
 
+    // Dashboard
+    Route::get('dashboard/karyawan', 'Api\DashboardController@sumKaryawan');
+    Route::get('dashboard/kendaraan-month', 'Api\DashboardController@sumKendaraanThisMonth');
+    Route::get('dashboard/kendaraan-unpaid', 'Api\DashboardController@sumKendaraanBelumBayar');
+    Route::get('dashboard/pencucian-month-income', 'Api\DashboardController@sumPemasukanPencucianBulan');
+    Route::get('dashboard/kedai-month-income', 'Api\DashboardController@sumPemasukanKedaiBulan');
+
     //Jabatan
     Route::post('jabatan', 'Api\JabatanController@create');
     Route::post('jabatan/{id}', 'Api\JabatanController@update');
