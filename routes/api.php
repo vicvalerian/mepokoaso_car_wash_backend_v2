@@ -137,6 +137,7 @@ Route::group(['middleware' => ['auth:karyawan-api'] ], function() {
     Route::get('laporan/transaksi-pencucian', 'Api\LaporanController@generateLaporanPencucian');
     Route::get('laporan/transaksi-kedai', 'Api\LaporanController@generateLaporanKedai');
     Route::get('laporan/pengeluaran-kedai', 'Api\LaporanController@generateLaporanPengeluaranKedai');
+    Route::get('laporan/pemasukan-pengeluaran-harian', 'Api\LaporanController@generateLaporanPemasukanPengeluaranHarian');
 
     // Pembelanjaan Harian
     Route::post('pembelanjaan-harian', 'Api\PembelanjaanHarianController@create');
