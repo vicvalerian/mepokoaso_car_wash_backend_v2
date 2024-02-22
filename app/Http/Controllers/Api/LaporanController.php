@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\DetailTransaksiPencuci;
+use App\Models\Karyawan;
 use App\Models\PembelanjaanHarian;
 use App\Models\PeminjamanKaryawan;
 use App\Models\PengeluaranKedai;
@@ -10,6 +12,7 @@ use App\Models\TransaksiKedai;
 use App\Models\TransaksiPencucian;
 use Illuminate\Http\Request;
 use PDF;
+use DB;
 
 class LaporanController extends Controller
 {
@@ -129,6 +132,40 @@ class LaporanController extends Controller
         $pdf = PDF::loadView('laporanpemasukanpengeluaranharian', $data);
     
         return $pdf->stream('Laporan Transaksi Pencucian.pdf');        
+    }
+
+    public function generateLaporanDetailGaji(Request $request){
+        $karyawan_id = $request->karyawan_id;
+        $bulan = $request->bulan;
+        $tahun = $request->tahun;
+
+        $karyawan = Karyawan::findOrFail($karyawan_id);
+
+        $files = TransaksiPencucian::join('detail_transaksi_pencucis', 'transaksi_pencucians.id', '=', 'detail_transaksi_pencucis.transaksi_pencucian_id')
+            ->select(DB::raw('DATE(transaksi_pencucians.tgl_pencucian) AS tgl_pencucian'), DB::raw('SUM(detail_transaksi_pencucis.upah_pencuci) AS upah'))
+            ->groupBy('tgl_pencucian')
+            ->where('detail_transaksi_pencucis.karyawan_id', $karyawan_id)
+            ->whereMonth('transaksi_pencucians.tgl_pencucian', $bulan)
+            ->whereYear('transaksi_pencucians.tgl_pencucian', $tahun)
+            ->get();
+
+
+        $totalUpah = 0;
+
+        foreach ($files as $item) {
+            $totalUpah += (int)$item['upah'];
+        }
+
+        $data = [
+            'judul' => 'Laporan Upah Harian ' . $karyawan->nama,
+            'subJudul' => 'Mepokoaso Car Wash',
+            'files' => $files,
+            'totalUpah' => $totalUpah,
+        ];
+          
+        $pdf = PDF::loadView('laporandetailgaji', $data);
+    
+        return $pdf->stream('Laporan Detail Gaji Krayawan.pdf');        
     }
 
     public static function formatRupiah($angka){
