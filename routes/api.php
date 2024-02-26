@@ -146,4 +146,11 @@ Route::group(['middleware' => ['auth:karyawan-api'] ], function() {
     Route::delete('pembelanjaan-harian/{id}', 'Api\PembelanjaanHarianController@delete');
     Route::get('pembelanjaan-harian/{id}', 'Api\PembelanjaanHarianController@get');
     Route::get('pembelanjaan-harian', 'Api\PembelanjaanHarianController@getAll');
+
+    // Impor Dokumen
+    Route::post('import/transaksi-pencucian', 'Api\ExcelController@importTransaksiPencucianDoc');
+    Route::post('import/pembelanjaan-harian', 'Api\ExcelController@importPembelanjaanHarianDoc');
 });
+
+// Sampel Dokumen
+Route::get('import/document-sample', 'Api\ExcelController@downloadDocumentSample');
