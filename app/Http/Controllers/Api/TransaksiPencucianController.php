@@ -307,7 +307,8 @@ class TransaksiPencucianController extends Controller
 
         if($keyword){
             $data->where(function ($q) use ($keyword){
-				$q->where('no_polisi', "like", "%" . $keyword . "%");
+                $q->where('no_polisi', "like", "%" . $keyword . "%");
+				$q->orWhere('no_pencucian', "like", "%" . $keyword . "%");
 				$q->orWhere('tgl_pencucian', "like", "%" . $keyword . "%");
                 $q->orWhereHas('karyawan', function($qq) use($keyword){
                     $qq->where('nama', "like", "%" . $keyword . "%");

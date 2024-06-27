@@ -56,6 +56,7 @@ class GajiKaryawanController extends Controller
                 $q->whereYear('tgl_pencucian', $tahun);
             })
             ->where('karyawan_id', $karyawan_id)
+            ->whereNull('deleted_at')
             ->sum('upah_pencuci');
         }
 
